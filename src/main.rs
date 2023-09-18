@@ -40,6 +40,7 @@ async fn main() {
         // `POST /users` goes to `create_user`
         .route("/user/register", post(route::user::post::handler))
         .route("/user/login", get(route::user::get::handler))
+        .route("/invite", post(route::game::invite::handler))
         .with_state(pool);
 
     // run our app with hyper
