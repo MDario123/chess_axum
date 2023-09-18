@@ -1,0 +1,1 @@
+DROP VIEW games.invited;
