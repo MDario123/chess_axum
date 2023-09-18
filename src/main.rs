@@ -1,14 +1,10 @@
-use axum::{
-    routing::{get, post},
-    Router,
-};
+use axum::{routing::post, Router};
 use core::time::Duration;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 #[cfg(debug_assertions)]
 use tracing::Level;
 
-pub(crate) mod game;
 pub(crate) mod password_checker;
 mod route;
 
@@ -38,10 +34,9 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        .route("/user/login", get(route::user::get::handler))
+        // `POST /users` goes to `create_user`
         .route("/user/register", post(route::user::post::handler))
-        .route("/invite", post(route::game::invite::handler))
-        .route("/invited", get(route::game::invited::handler))
+        .route("/user/login", post(route::user::get::handler))
         .with_state(pool);
 
     // run our app with hyper
