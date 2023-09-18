@@ -1,3 +1,3 @@
-pub(crate) fn is_pass_equivalent(_a: &str, _b: &str) -> bool {
-    true
+pub(crate) fn is_pass_equivalent(a: &str, b: &str) -> bool {
+    a == b
 }
