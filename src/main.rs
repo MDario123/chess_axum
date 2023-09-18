@@ -1,4 +1,7 @@
-use axum::{routing::post, Router};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use core::time::Duration;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
@@ -36,7 +39,7 @@ async fn main() {
     let app = Router::new()
         // `POST /users` goes to `create_user`
         .route("/user/register", post(route::user::post::handler))
-        .route("/user/login", post(route::user::get::handler))
+        .route("/user/login", get(route::user::get::handler))
         .with_state(pool);
 
     // run our app with hyper
