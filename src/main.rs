@@ -42,6 +42,7 @@ async fn main() {
         .route("/user/login", get(route::user::get::handler))
         .route("/invite", post(route::game::invite::handler))
         .route("/invited", get(route::game::invited::handler))
+        .route("/accept", get(route::game::accept::handler))
         .with_state(pool);
 
     // run our app with hyper
