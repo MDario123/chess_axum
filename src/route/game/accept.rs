@@ -1,4 +1,4 @@
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{extract::State, http::StatusCode, response::Result, Json};
 use serde::Deserialize;
 use sqlx::{error::ErrorKind, PgPool};
 use tracing::{error, info};
@@ -7,33 +7,18 @@ use tracing::{error, info};
 pub async fn handler(
     State(postgres): State<PgPool>,
     Json(payload): Json<Accept>,
-) -> Result<StatusCode, StatusCode> {
+) -> Result<StatusCode> {
     info!("Accepting invite");
 
+    // Begin transaction
     let mut trx = postgres.begin().await.map_err(|err| {
         error!("Error starting transaction {err}");
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
 
-    sqlx::query!(
-        "
-        SELECT true as exists
-        FROM games.v_pending_invites
-        WHERE inviter = $1
-          AND invited = $2
-        ",
-        payload.inviter,
-        payload.invited,
-    )
-    .fetch_optional(&mut *trx)
-    .await
-    .map_err(|err| {
-        error!("Error checking if this invite exists {err}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?
-    .map_or_else(|| Err(StatusCode::NOT_FOUND), |_| Ok(true))?;
-
-    sqlx::query!(
+    // Attempt to delete invite
+    // If it doesn't delete anything send StatusCode::NOT_FOUND
+    let affected = sqlx::query!(
         "
         DELETE FROM games.v_pending_invites
         WHERE inviter = $1
@@ -47,8 +32,15 @@ pub async fn handler(
     .map_err(|err| {
         error!("Error deleting invite {err}");
         StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    })?
+    .rows_affected();
 
+    if affected == 0 {
+        return Err(StatusCode::NOT_FOUND.into());
+    }
+
+    // Insert a new game as active between this 2 players
+    // If there is already one return StatusCode::NOT_ACCEPTABLE
     sqlx::query!(
         "
         INSERT INTO games.t_active(player_w, player_b, fen, start_pos) 
@@ -72,6 +64,7 @@ pub async fn handler(
         }
     })?;
 
+    // Everything went well, commit the transaction
     trx.commit().await.map_err(|err| {
         error!("Error commiting transaction {err}");
         StatusCode::INTERNAL_SERVER_ERROR
