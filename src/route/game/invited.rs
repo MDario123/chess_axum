@@ -24,15 +24,13 @@ pub async fn handler(
         payload.username,
     )
     .fetch_all(&postgres)
-    .await;
+    .await
+    .map_err(|err| {
+        error!("Error checking invites {err}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-    match res {
-        Ok(res) => Ok(Json(res)),
-        Err(err) => {
-            error!("Error checking invites {err}");
-            Err(StatusCode::INTERNAL_SERVER_ERROR)
-        }
-    }
+    Ok(Json(res))
 }
 
 #[derive(Deserialize, Debug)]
