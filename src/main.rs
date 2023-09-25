@@ -8,7 +8,7 @@ use std::net::SocketAddr;
 #[cfg(debug_assertions)]
 use tracing::Level;
 
-pub(crate) mod password_checker;
+pub(crate) mod authentication;
 mod route;
 
 #[tokio::main]
