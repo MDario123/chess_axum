@@ -64,8 +64,8 @@ pub async fn handler(State(postgres): State<PgPool>, Json(payload): Json<Accept>
 
     let res = sqlx::query!(
         "
-        INSERT INTO games.t_active(player_w, player_b, fen) 
-        VALUES ($1, $2, $3)
+        INSERT INTO games.t_active(player_w, player_b, fen, start_pos) 
+        VALUES ($1, $2, $3, $3)
         ",
         payload.inviter,
         payload.invited,
