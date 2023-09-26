@@ -1,4 +1,5 @@
 use axum::{
+    middleware,
     routing::{get, post},
     Router,
 };
@@ -37,15 +38,19 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        // `POST /users` goes to `create_user`
-        .route("/user/register", post(route::user::post::handler))
-        .route("/user/login", get(route::user::get::handler))
         .route("/invite", post(route::game::invite::handler))
         .route("/invited", get(route::game::invited::handler))
         .route("/accept", get(route::game::accept::handler))
         .route("/active", get(route::game::active::handler))
         .route("/make_move", get(route::game::make_move::handler))
         .route("/finished", get(route::game::finished::handler))
+        .route_layer(middleware::from_fn_with_state(
+            pool.clone(),
+            authentication::auth,
+        ))
+        // `POST /users` goes to `create_user`
+        .route("/user/register", post(route::user::post::handler))
+        .route("/user/login", get(route::user::get::handler))
         .with_state(pool);
 
     // run our app with hyper

@@ -1,4 +1,5 @@
-use axum::{extract::State, http::StatusCode, response::Result, Json};
+use crate::authentication::LoggedUser;
+use axum::{extract::State, http::StatusCode, response::Result, Extension, Json};
 use serde::Deserialize;
 use sqlx::{error::ErrorKind, PgPool};
 use tracing::{error, info};
@@ -6,6 +7,7 @@ use tracing::{error, info};
 #[tracing::instrument]
 pub async fn handler(
     State(postgres): State<PgPool>,
+    Extension(user): Extension<LoggedUser>,
     Json(payload): Json<Invitation>,
 ) -> Result<StatusCode> {
     info!("Inviting");
@@ -15,7 +17,7 @@ pub async fn handler(
         INSERT INTO games.v_pending_invites (inviter, invited)
         VALUES ($1, $2)
         ",
-        payload.inviter,
+        user.username(),
         payload.invited,
     )
     .execute(&postgres)
@@ -37,6 +39,5 @@ pub async fn handler(
 
 #[derive(Deserialize, Debug)]
 pub struct Invitation {
-    inviter: String,
     invited: String,
 }

@@ -5,7 +5,7 @@ use super::*;
 #[test]
 fn token_generation() {
     let s = generate_token();
-    assert_eq!(s.bytes().count(), 64);
+    assert_eq!(s.bytes().len(), 64);
 
     let mut map: HashSet<String> = HashSet::new();
 

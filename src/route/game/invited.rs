@@ -1,16 +1,18 @@
+use crate::authentication::LoggedUser;
 use axum::{
-    extract::{Query, State},
+    extract::State,
     http::StatusCode,
     response::{Json, Result},
+    Extension,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::PgPool;
 use tracing::{error, info};
 
 #[tracing::instrument]
 pub async fn handler(
     State(postgres): State<PgPool>,
-    Query(payload): Query<User>,
+    Extension(user): Extension<LoggedUser>,
 ) -> Result<Json<Vec<Inviter>>, StatusCode> {
     info!("Checking invites");
 
@@ -22,7 +24,7 @@ pub async fn handler(
         WHERE invited = $1
         ORDER BY created_at DESC
         ",
-        payload.username,
+        user.username(),
     )
     .fetch_all(&postgres)
     .await
@@ -32,11 +34,6 @@ pub async fn handler(
     })?;
 
     Ok(Json(res))
-}
-
-#[derive(Deserialize, Debug)]
-pub struct User {
-    username: String,
 }
 
 #[derive(Serialize, sqlx::FromRow)]

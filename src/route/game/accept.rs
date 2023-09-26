@@ -1,4 +1,5 @@
-use axum::{extract::State, http::StatusCode, response::Result, Json};
+use crate::authentication::LoggedUser;
+use axum::{extract::State, http::StatusCode, response::Result, Extension, Json};
 use serde::Deserialize;
 use sqlx::{error::ErrorKind, PgPool};
 use tracing::{error, info};
@@ -6,6 +7,7 @@ use tracing::{error, info};
 #[tracing::instrument]
 pub async fn handler(
     State(postgres): State<PgPool>,
+    Extension(user): Extension<LoggedUser>,
     Json(payload): Json<Accept>,
 ) -> Result<StatusCode> {
     info!("Accepting invite");
@@ -25,7 +27,7 @@ pub async fn handler(
           AND invited = $2
         ",
         payload.inviter,
-        payload.invited,
+        user.username(),
     )
     .execute(&mut *trx)
     .await
@@ -47,7 +49,7 @@ pub async fn handler(
         VALUES ($1, $2, $3, $3)
         ",
         payload.inviter,
-        payload.invited,
+        user.username(),
         chess::Board::default().to_string(),
     )
     .execute(&mut *trx)
@@ -75,6 +77,5 @@ pub async fn handler(
 
 #[derive(Debug, Deserialize)]
 pub struct Accept {
-    invited: String,
     inviter: String,
 }

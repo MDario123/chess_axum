@@ -1,22 +1,19 @@
-use axum::{
-    extract::{Query, State},
-    http::StatusCode,
-    response::Result,
-    Json,
-};
-use serde::{Deserialize, Serialize};
+use crate::authentication::LoggedUser;
+use axum::{extract::State, http::StatusCode, response::Result, Extension, Json};
+use serde::Serialize;
 use sqlx::PgPool;
 use tracing::error;
 
 #[tracing::instrument]
 pub async fn handler(
     State(postgres): State<PgPool>,
-    Query(user): Query<User>,
+    Extension(user): Extension<LoggedUser>,
 ) -> Result<Json<Vec<ABoard>>, StatusCode> {
     let boards = sqlx::query_as!(
         ABoard,
         "
         SELECT 
+            id,
             player_b as opponent,
             fen
         FROM games.t_active
@@ -25,12 +22,13 @@ pub async fn handler(
         UNION 
         
         SELECT 
+            id, 
             player_w as opponent,
             fen
         FROM games.t_active
         WHERE player_b = $1
         ",
-        user.username,
+        user.username(),
     )
     .fetch_all(&postgres)
     .await
@@ -42,13 +40,9 @@ pub async fn handler(
     Ok(Json(boards))
 }
 
-#[derive(Deserialize, Debug)]
-pub struct User {
-    username: String,
-}
-
 #[derive(sqlx::FromRow, Serialize)]
 pub struct ABoard {
+    id: Option<i64>,
     opponent: Option<String>,
     fen: Option<String>,
 }
