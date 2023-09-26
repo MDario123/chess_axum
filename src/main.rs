@@ -45,6 +45,7 @@ async fn main() {
         .route("/accept", get(route::game::accept::handler))
         .route("/active", get(route::game::active::handler))
         .route("/make_move", get(route::game::make_move::handler))
+        .route("/finished", get(route::game::finished::handler))
         .with_state(pool);
 
     // run our app with hyper

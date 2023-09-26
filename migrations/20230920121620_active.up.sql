@@ -13,7 +13,7 @@ CREATE INDEX ON games.t_active(player_w);
 CREATE INDEX ON games.t_active(player_b);
 
 CREATE TABLE games.t_moves (
-  id_game bigint NOT NULL REFERENCES games.t_active(id),
+  id_game bigint NOT NULL REFERENCES games.t_active(id) ON DELETE CASCADE ON UPDATE CASCADE,
   move_num int NOT NULL,
   san varchar(8) NOT NULL,
   previous_fen text NOT NULL,

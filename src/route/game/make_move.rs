@@ -20,10 +20,13 @@ pub async fn handler(
     let cgame = sqlx::query_as!(
         CGame,
         "
-        SELECT id, fen, start_pos
-        FROM games.t_active
+        SELECT id, fen, start_pos, COALESCE(mo.move_num, 0::int) as last_move
+        FROM games.t_active ac
+            LEFT JOIN games.t_moves mo ON mo.id_game = ac.id
         WHERE player_w = $1
           AND player_b = $2
+        ORDER BY mo.move_num DESC
+        LIMIT 1
         ",
         payload.player_w,
         payload.player_b,
@@ -50,19 +53,12 @@ pub async fn handler(
     sqlx::query!(
         "
         INSERT INTO games.t_moves(id_game, san, previous_fen, move_num)
-        SELECT 
-            $1 as id_game, 
-            $2 as san, 
-            $3 as previous_fen,
-            move_num + 1 as move_num
-        FROM games.t_moves
-        WHERE id_game = $1
-        ORDER BY move_num DESC
-        LIMIT 1
+        VALUES($1, $2, $3, $4)
         ",
         cgame.id,
         payload.san,
         cgame.fen,
+        cgame.last_move.unwrap_or(0) + 1,
     )
     .execute(&mut *trx)
     .await
@@ -102,6 +98,7 @@ pub async fn handler(
             SELECT san
             FROM games.t_moves
             WHERE id_game = $1
+            ORDER BY move_num
             ",
             cgame.id,
         )
@@ -132,12 +129,20 @@ pub async fn handler(
 
         sqlx::query!(
             "
-            INSERT INTO games.t_finished(id, start_pos, moves)
-            VALUES ($1, $2, $3)
+            INSERT INTO games.t_finished(
+                id,
+                start_pos,
+                moves,
+                player_w,
+                player_b
+            )
+            VALUES ($1, $2, $3, $4, $5)
             ",
             cgame.id,
             cgame.start_pos,
             moves,
+            payload.player_w,
+            payload.player_b,
         )
         .execute(&mut *trx)
         .await
@@ -185,6 +190,7 @@ pub struct CGame {
     id: i64,
     fen: String,
     start_pos: String,
+    last_move: Option<i32>,
 }
 
 #[derive(sqlx::FromRow)]
