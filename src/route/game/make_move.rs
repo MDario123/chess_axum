@@ -171,12 +171,10 @@ pub async fn handler(
             "
         UPDATE games.t_active
         SET fen = $1
-        WHERE player_w = $2
-          AND player_b = $3
+        WHERE id = $2
         ",
             board.to_string(),
-            cgame.player_w,
-            cgame.player_b,
+            cgame.id,
         )
         .execute(&mut *trx)
         .await
