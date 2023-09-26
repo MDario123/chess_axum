@@ -42,6 +42,7 @@ async fn main() {
         .route("/invited", get(route::game::invited::handler))
         .route("/accept", get(route::game::accept::handler))
         .route("/active", get(route::game::active::handler))
+        .route("/get_board", get(route::game::get_board::handler))
         .route("/make_move", get(route::game::make_move::handler))
         .route("/finished", get(route::game::finished::handler))
         .route_layer(middleware::from_fn_with_state(
