@@ -20,6 +20,7 @@ pub async fn handler(
         SELECT inviter
         FROM games.v_pending_invites
         WHERE invited = $1
+        ORDER BY created_at DESC
         ",
         payload.username,
     )
