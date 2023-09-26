@@ -1,4 +1,4 @@
-use crate::authentication::is_pass_equivalent;
+use crate::authentication::{generate_token, is_pass_equivalent};
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -13,13 +13,14 @@ pub(crate) async fn handler(
     // database connection pool
     State(pool): State<PgPool>,
     Query(user): Query<LoginAttempt>,
-) -> Result<StatusCode> {
+) -> Result<String, StatusCode> {
     info!("Starting!");
     // Get user and password
     let pot_user = sqlx::query_as!(
         User,
         "
         SELECT
+            id,
             password
         FROM users.basic_info
         WHERE username = $1
@@ -35,15 +36,33 @@ pub(crate) async fn handler(
     .ok_or(StatusCode::NOT_FOUND)?;
 
     if !is_pass_equivalent(&user.password, &pot_user.password) {
-        return Err(StatusCode::NOT_ACCEPTABLE.into());
+        return Err(StatusCode::NOT_ACCEPTABLE);
     }
 
-    Ok(StatusCode::OK)
+    let token = generate_token();
+
+    sqlx::query!(
+        "
+        INSERT INTO users.token(token, user_id)
+        VALUES($1, $2)
+        ",
+        &token,
+        pot_user.id,
+    )
+    .execute(&pool)
+    .await
+    .map_err(|err| {
+        error!("Error storing new token {err}");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
+
+    Ok(token)
 }
 
 // the input to our handler
 #[derive(sqlx::FromRow)]
 pub(crate) struct User {
+    id: i64,
     password: String,
 }
 
