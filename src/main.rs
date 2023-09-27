@@ -38,13 +38,13 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new()
-        .route("/invite", post(route::game::invite::handler))
-        .route("/invited", get(route::game::invited::handler))
-        .route("/accept", get(route::game::accept::handler))
-        .route("/active", get(route::game::active::handler))
-        .route("/get_board", get(route::game::get_board::handler))
-        .route("/make_move", get(route::game::make_move::handler))
-        .route("/finished", get(route::game::finished::handler))
+        .route("/invite", post(route::game::invite))
+        .route("/invited", get(route::game::invited))
+        .route("/accept", get(route::game::accept))
+        .route("/active", get(route::game::active))
+        .route("/get_board", get(route::game::get_board))
+        .route("/make_move", get(route::game::make_move))
+        .route("/finished", get(route::game::finished))
         .route_layer(middleware::from_fn_with_state(
             pool.clone(),
             authentication::auth,
