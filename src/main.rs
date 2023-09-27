@@ -40,10 +40,10 @@ async fn main() {
     let app = Router::new()
         .route("/invite", post(route::game::invite))
         .route("/invited", get(route::game::invited))
-        .route("/accept", get(route::game::accept))
+        .route("/accept", post(route::game::accept))
         .route("/active", get(route::game::active))
         .route("/get_board", get(route::game::get_board))
-        .route("/make_move", get(route::game::make_move))
+        .route("/make_move", post(route::game::make_move))
         .route("/finished", get(route::game::finished))
         .route_layer(middleware::from_fn_with_state(
             pool.clone(),
