@@ -12,5 +12,5 @@ RUN cargo build --release
 # FROM docker.uclv.cu/debian:buster-slim
 FROM alpine:3.18
 WORKDIR /app
-COPY --from=builder /app/target/release/chess_uclv /app/chess_uclv
+COPY --from=builder /app/target/release/chess_uclv /app
 CMD ["/app/chess_uclv"]
