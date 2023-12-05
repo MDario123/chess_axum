@@ -25,6 +25,7 @@ async fn main() {
     #[cfg(not(debug_assertions))]
     tracing_subscriber::fmt().compact().pretty().init();
 
+    // get database url from ennv
     let db_connection_str = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://user:password@127.0.0.1/chess?sslmode=disable".to_string());
 
@@ -56,7 +57,13 @@ async fn main() {
 
     // run our app with hyper
     // `axum::Server` is a re-export of `hyper::Server`
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = SocketAddr::from((
+        [0, 0, 0, 0],
+        std::env::var("PORT")
+            .expect("PORT should be set")
+            .parse::<u16>()
+            .expect("Should be a 16 bit unsigned integer"),
+    ));
     tracing::debug!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
