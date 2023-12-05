@@ -1,7 +1,7 @@
 # Build stage
 FROM rust:1.73.0-slim-buster as builder
 RUN cargo new --bin rust-and-docker
-WORKDIR ./app
+WORKDIR /app
 COPY ./Cargo.toml ./Cargo.toml
 COPY ./src ./src
 ARG DATABASE_URL=""
@@ -12,5 +12,5 @@ RUN cargo build --release
 # FROM docker.uclv.cu/debian:buster-slim
 FROM alpine:3.18
 WORKDIR /app
-COPY --from=builder /app/target/release/chess_uclv .
+COPY --from=builder /app/target/release/chess_uclv /app/chess_uclv
 CMD ["/app/chess_uclv"]
