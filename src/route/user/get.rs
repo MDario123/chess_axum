@@ -1,6 +1,6 @@
 use crate::authentication::{generate_token, is_pass_equivalent};
 use axum::{
-    extract::{Query, State},
+    extract::{Json, State},
     http::StatusCode,
     response::Result,
 };
@@ -12,7 +12,7 @@ use tracing::{error, info};
 pub(crate) async fn handler(
     // database connection pool
     State(pool): State<PgPool>,
-    Query(user): Query<LoginAttempt>,
+    Json(user): Json<LoginAttempt>,
 ) -> Result<String, StatusCode> {
     info!("Starting!");
     // Get user and password
